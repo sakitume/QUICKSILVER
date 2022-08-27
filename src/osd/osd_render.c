@@ -563,6 +563,85 @@ void osd_init() {
   osd_intro();
 }
 
+#ifdef PID_STICK_TUNING
+static void os_display_pid_stick_tuning()
+{
+    extern int current_pid_term;
+    extern int current_pid_axis;
+    extern bool display_pid_stick_tuning;
+
+    const int x = (30 - 10) / 2;
+    const int row = 4;
+
+    static uint32_t stick_tuning_active_last;
+    if (display_pid_stick_tuning)
+    {
+        stick_tuning_active_last = time_micros();
+    }
+    else if (stick_tuning_active_last)
+    {
+        // Wait 1/2 second before erasing
+        if ((time_micros() - stick_tuning_active_last) > (1000 * 500))
+        {
+            stick_tuning_active_last = 0;
+
+            const char* s = "          ";
+            osd_start(OSD_ATTR_TEXT, x, row);
+            osd_write_str(s);
+            osd_start(OSD_ATTR_TEXT, x, row+1);
+            osd_write_str(s);
+        }
+    }
+
+    // If stick tuning active within the past 1/2 second
+    if (stick_tuning_active_last)
+    {
+        const char* s;
+        pid_rate_t *rates = profile_current_pid_rates();
+        float term;
+        switch (current_pid_term)
+        {
+            case 0: 
+                s = "KP  ";
+                term = rates->kp.axis[current_pid_axis];
+                break;
+            case 1: 
+                s = "KI  ";    
+                term = rates->ki.axis[current_pid_axis];
+                break;
+            case 2: 
+                s = "KD  ";    
+                term = rates->kd.axis[current_pid_axis];
+                break;
+            default: 
+                s = "??  ";   
+                term = 0;
+                break;
+        }
+
+        osd_start(OSD_ATTR_TEXT, x, row);
+        osd_write_str(s);
+        osd_start(OSD_ATTR_TEXT, x+4, row);
+        osd_write_float(term, 5, 1);
+
+        switch (current_pid_axis)
+        {
+#ifdef COMBINE_PITCH_ROLL_PID_TUNING
+            case 0:
+            case 1: s = "ROLL+PITCH";   break;  // length is 10
+#else
+            case 0: s = "ROLL      ";   break;
+            case 1: s = "PITCH     ";   break;
+#endif            
+            case 2: s = "YAW       ";   break;
+            default:s = "          ";   break;
+        }
+        osd_start(OSD_ATTR_TEXT, x, row+1);
+        osd_write_str(s);
+    }
+}
+#endif
+
 static void osd_display_regular() {
   osd_element_t *el = (osd_element_t *)(osd_elements() + osd_state.element);
   if (osd_state.element < OSD_ELEMENT_MAX && !el->active) {
@@ -572,6 +651,9 @@ static void osd_display_regular() {
 
   switch (osd_state.element) {
   case OSD_CALLSIGN: {
+#ifdef PID_STICK_TUNING
+  os_display_pid_stick_tuning();
+#endif
     osd_start(osd_attr(el), el->pos_x, el->pos_y);
     osd_write_str((const char *)profile.osd.callsign);
 

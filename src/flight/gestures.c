@@ -1,5 +1,6 @@
 #include "flight/gestures.h"
 
+#include <math.h>
 #include "flash.h"
 #include "flight/control.h"
 #include "flight/pid.h"
@@ -8,6 +9,13 @@
 #include "profile.h"
 #include "rx.h"
 #include "util/util.h"
+
+#ifdef PID_STICK_TUNING
+bool display_pid_stick_tuning;
+
+extern void set_current_pid_term( int term );
+extern void multiply_current_pid_value( float multiplier );
+#endif
 
 extern int ledcommand;
 extern int ledblink;
@@ -132,4 +140,40 @@ void gestures() {
       // ledblink = blink; //Will cause led logic to blink the number of times ledblink has stored in it.
 #endif
   }
+#ifdef PID_STICK_TUNING
+  else {
+    static uint32_t next_update_time = 0;
+    const uint32_t time = time_micros();
+    if ( time > next_update_time ) {
+      display_pid_stick_tuning = false;
+      bool is_stick_tuning_active = false;
+      #define STICK_DEAD_ZONE 0.75f
+      if ( state.rx_filtered.axis[ 0 ] < -STICK_DEAD_ZONE && state.rx_filtered.axis[ 1 ] > STICK_DEAD_ZONE ) { // left + front
+        set_current_pid_term( 0 ); // P
+        is_stick_tuning_active = true;
+      } else if ( state.rx_filtered.axis[ 0 ] > STICK_DEAD_ZONE && state.rx_filtered.axis[ 1 ] > STICK_DEAD_ZONE ) { // right + front
+        set_current_pid_term( 1 ); // I
+        is_stick_tuning_active = true;
+      } else if ( state.rx_filtered.axis[ 0 ] > STICK_DEAD_ZONE && state.rx_filtered.axis[ 1 ] < -STICK_DEAD_ZONE ) { // right + back
+        set_current_pid_term( 2 ); // D
+        is_stick_tuning_active = true;
+      } else if ( state.rx_filtered.axis[ 0 ] < -STICK_DEAD_ZONE && state.rx_filtered.axis[ 1 ] < -STICK_DEAD_ZONE ) { // left + back
+        display_pid_stick_tuning = true;
+        next_pid_axis();
+        next_update_time = time + 500000; // 0.5 seconds
+      }
+      if ( is_stick_tuning_active ) {
+        display_pid_stick_tuning = true;
+        const float tuning_dead_band = 0.1f; // 10% deadband
+        if ( fabsf( state.rx_filtered.axis[ 2 ] ) > tuning_dead_band ) { //
+          const float multiplier = 1.01f; // 1% change per update
+          multiply_current_pid_value( state.rx_filtered.axis[ 2 ] > 0.0f ? multiplier : 1.0f / multiplier );
+          pid_gestures_used = 1;
+          // update 4 .. 50 times per second:
+          next_update_time = time + mapf( fabsf( state.rx_filtered.axis[ 2 ] ), tuning_dead_band, 1.0f, 1e6f / 4.0f, 1e6f / 50.0f );
+        }
+      }
+    }
+  }
+#endif // PID_STICK_TUNING
 }

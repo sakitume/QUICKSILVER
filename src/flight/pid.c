@@ -359,3 +359,22 @@ int increase_pid() {
 int decrease_pid() {
   return change_pid_value(0);
 }
+
+#ifdef PID_STICK_TUNING
+void set_current_pid_term(int term)
+{
+  current_pid_term = term;
+}
+
+void multiply_current_pid_value( float multiplier )
+{
+	current_pid_term_pointer()->axis[ current_pid_axis ] *= multiplier;
+#ifdef COMBINE_PITCH_ROLL_PID_TUNING
+	if ( current_pid_axis == 0 ) {
+		current_pid_term_pointer()->axis[ current_pid_axis + 1 ] *= multiplier;
+	}
+#endif
+}
+#endif
+
+

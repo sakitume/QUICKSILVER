@@ -309,6 +309,12 @@
 // *************Feel free to change 1.0 value to your liking
 #define PID_TUNING_ADJUST_AMOUNT 1.0 // fixed inc/dec values for PID tuning
 
+
+// *************Comment out to disable pid tuning via sticks (not gestures) - originally created by Markus Gritsch (SilF4ware)
+// Note: PID stick tuning also honors the COMBINE_PITCH_ROLL_PID_TUNING option (above)
+#define PID_STICK_TUNING
+
+
 //#############################################################################################################################
 //#############################################################################################################################
 // debug / other things
