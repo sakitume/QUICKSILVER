@@ -290,6 +290,15 @@ typedef struct {
   uint32_t datetime;
 } profile_metadata_t;
 
+typedef struct {
+  uint32_t blackbox_fieldflags;
+  uint32_t rate_divisor;
+} profile_blackbox_t;
+
+#define BLACKBOX_MEMBERS              \
+  MEMBER(blackbox_fieldflags, uint32) \
+  MEMBER(rate_divisor, uint32)
+
 // Full Profile
 typedef struct {
   profile_metadata_t meta;
@@ -301,6 +310,7 @@ typedef struct {
   profile_receiver_t receiver;
   profile_pid_t pid;
   profile_voltage_t voltage;
+  profile_blackbox_t blackbox;
 } profile_t;
 
 #define PROFILE_MEMBERS                \
@@ -312,7 +322,8 @@ typedef struct {
   MEMBER(rate, profile_rate_t)         \
   MEMBER(receiver, profile_receiver_t) \
   MEMBER(pid, profile_pid_t)           \
-  MEMBER(voltage, profile_voltage_t)
+  MEMBER(voltage, profile_voltage_t)   \
+  MEMBER(blackbox, profile_blackbox_t)
 
 typedef enum {
   FEATURE_BRUSHLESS = (1 << 1),

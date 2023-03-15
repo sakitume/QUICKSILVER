@@ -1479,12 +1479,15 @@ void osd_display() {
       osd_menu_start();
       osd_menu_header("BLACKBOX");
 
-      if (osd_menu_label_start(4, 3)) {
+      osd_menu_select_screen(4, 3, "BLACKBOX FIELDS", OSD_SCREEN_BLACKBOX_FIELDS);
+      osd_menu_select_screen(4, 4, "BLACKBOX RATE", OSD_SCREEN_BLACKBOX_RATE);
+
+      if (osd_menu_label_start(4, 5)) {
         osd_write_int(data_flash_header.file_num, 3);
         osd_write_str(" FILES");
       }
 
-      if (osd_menu_label_start(4, 4)) {
+      if (osd_menu_label_start(4, 6)) {
         const uint32_t usage = (float)(data_flash_usage()) / (float)(bounds.total_size) * 100;
 
         osd_write_int(usage, 3);
@@ -1521,6 +1524,72 @@ void osd_display() {
 #endif
     break;
   }
+
+  case OSD_SCREEN_BLACKBOX_FIELDS: {
+#ifdef ENABLE_BLACKBOX
+    osd_menu_start();
+    osd_menu_header("BLACKBOX FIELDS");
+
+    if (profile.blackbox.blackbox_fieldflags == (uint32_t)-1)
+      osd_menu_label(7, 3, "ACTIVE: ALL FIELDS");
+    else
+      osd_menu_label(7, 3, "ACTIVE: ONLY GYRO");
+
+    if (osd_menu_button(7, 5, "ALL FIELDS")) {
+      profile.blackbox.blackbox_fieldflags = (uint32_t)-1;  // Set all bits
+      if (osd_menu_finish()) {
+        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_FIELDS);
+      }
+    }
+
+    if (osd_menu_button(7, 6, "ONLY GYRO")) {
+      profile.blackbox.blackbox_fieldflags = (uint32_t)(0
+        | (1 << BBOX_FIELD_LOOP)    // This must always be set
+        | (1 << BBOX_FIELD_TIME)    // This must always be set
+        | (1 << BBOX_FIELD_GYRO_FILTER)
+      );
+      if (osd_menu_finish()) {
+        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_FIELDS);
+      }
+    }
+
+    osd_menu_select_save_and_exit(7);
+    osd_menu_finish();
+#endif
+    break;
+  }
+
+  case OSD_SCREEN_BLACKBOX_RATE: {
+#ifdef ENABLE_BLACKBOX
+    osd_menu_start();
+    osd_menu_header("BLACKBOX RATE");
+
+    if (profile.blackbox.rate_divisor == 4)
+      osd_menu_label(7, 3, "ACTIVE: 4");
+    else
+      osd_menu_label(7, 3, "ACTIVE: 20");
+
+    if (osd_menu_button(7, 5, "RATE DIVISOR 4")) {
+      profile.blackbox.rate_divisor = 4;
+      if (osd_menu_finish()) {
+        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_RATE);
+      }
+    }
+
+    if (osd_menu_button(7, 6, "RATE DIVISOR 20")) {
+      profile.blackbox.rate_divisor = 20;
+      if (osd_menu_finish()) {
+        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_RATE);
+      }
+    }
+
+    osd_menu_select_save_and_exit(7);
+    osd_menu_finish();
+#endif
+    break;
+  }
+
+
 
   case OSD_SCREEN_STICK_WIZARD:
     osd_menu_start();

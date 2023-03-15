@@ -494,6 +494,10 @@ const profile_t default_profile = {
             ENCODE_OSD_ELEMENT(1, 0, 0, 17),  // OSD_CURRENT_DRAW
         },
     },
+    .blackbox = {
+        .blackbox_fieldflags = (uint32_t)-1,    // default is to emit all fields
+        .rate_divisor = 4
+    },
 };
 
 #define _MACRO_STR(arg) #arg
@@ -668,6 +672,10 @@ CBOR_START_STRUCT_ENCODER(profile_receiver_t)
 RECEIVER_MEMBERS
 CBOR_END_STRUCT_ENCODER()
 
+CBOR_START_STRUCT_ENCODER(profile_blackbox_t)
+BLACKBOX_MEMBERS
+CBOR_END_STRUCT_ENCODER()
+
 CBOR_START_STRUCT_ENCODER(profile_t)
 PROFILE_MEMBERS
 CBOR_END_STRUCT_ENCODER()
@@ -784,6 +792,10 @@ CBOR_END_STRUCT_DECODER()
 
 CBOR_START_STRUCT_DECODER(profile_receiver_t)
 RECEIVER_MEMBERS
+CBOR_END_STRUCT_DECODER()
+
+CBOR_START_STRUCT_DECODER(profile_blackbox_t)
+BLACKBOX_MEMBERS
 CBOR_END_STRUCT_DECODER()
 
 CBOR_START_STRUCT_DECODER(profile_t)
