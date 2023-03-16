@@ -1479,8 +1479,7 @@ void osd_display() {
       osd_menu_start();
       osd_menu_header("BLACKBOX");
 
-      osd_menu_select_screen(4, 3, "BLACKBOX FIELDS", OSD_SCREEN_BLACKBOX_FIELDS);
-      osd_menu_select_screen(4, 4, "BLACKBOX RATE", OSD_SCREEN_BLACKBOX_RATE);
+      osd_menu_select_screen(4, 3, "PRESETS", OSD_SCREEN_BLACKBOX_PRESETS);
 
       if (osd_menu_label_start(4, 5)) {
         osd_write_int(data_flash_header.file_num, 3);
@@ -1525,71 +1524,44 @@ void osd_display() {
     break;
   }
 
-  case OSD_SCREEN_BLACKBOX_FIELDS: {
+  case OSD_SCREEN_BLACKBOX_PRESETS: {
 #ifdef ENABLE_BLACKBOX
     osd_menu_start();
-    osd_menu_header("BLACKBOX FIELDS");
+    osd_menu_header("BLACKBOX PRESETS");
 
-    if (profile.blackbox.blackbox_fieldflags == (uint32_t)-1)
-      osd_menu_label(7, 3, "ACTIVE: ALL FIELDS");
-    else
-      osd_menu_label(7, 3, "ACTIVE: ONLY GYRO");
+    // Display currently active preset wrapped in angle brackets
+    // as prefacing it with "ACTIVE: " takes too much space
+    const char* label = "UNKNOWN";
+    for (int i=0; i<blackbox_presets_count; i++) {
+      const blackbox_preset_t *preset = &blackbox_presets[i];
+      if (blackbox_preset_equals(preset, &profile.blackbox)) {
+        label = preset->name_osd;
+        break;
+      }
+    }
+    if (osd_menu_label_start(3, 3)) {
+      osd_write_char('<');
+      osd_write_str(label);
+      osd_write_char('>');
+    }
 
-    if (osd_menu_button(7, 5, "ALL FIELDS")) {
-      profile.blackbox.blackbox_fieldflags = (uint32_t)-1;  // Set all bits
-      if (osd_menu_finish()) {
-        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_FIELDS);
+    // Display available presets
+    int y = 5;
+    for (int i=0; i<blackbox_presets_count; i++, y++) {
+      const blackbox_preset_t *preset = &blackbox_presets[i];
+      if (osd_menu_button(3, y, preset->name_osd)) {
+        blackbox_preset_apply(preset, &profile.blackbox);
+        if (osd_menu_finish()) {
+          osd_push_screen_replace(OSD_SCREEN_BLACKBOX_PRESETS);
+        }
       }
     }
 
-    if (osd_menu_button(7, 6, "ONLY GYRO")) {
-      profile.blackbox.blackbox_fieldflags = (uint32_t)(0
-        | (1 << BBOX_FIELD_LOOP)    // This must always be set
-        | (1 << BBOX_FIELD_TIME)    // This must always be set
-        | (1 << BBOX_FIELD_GYRO_FILTER)
-      );
-      if (osd_menu_finish()) {
-        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_FIELDS);
-      }
-    }
-
-    osd_menu_select_save_and_exit(7);
+    osd_menu_select_save_and_exit(3);
     osd_menu_finish();
 #endif
     break;
   }
-
-  case OSD_SCREEN_BLACKBOX_RATE: {
-#ifdef ENABLE_BLACKBOX
-    osd_menu_start();
-    osd_menu_header("BLACKBOX RATE");
-
-    if (profile.blackbox.rate_divisor == 4)
-      osd_menu_label(7, 3, "ACTIVE: 4");
-    else
-      osd_menu_label(7, 3, "ACTIVE: 20");
-
-    if (osd_menu_button(7, 5, "RATE DIVISOR 4")) {
-      profile.blackbox.rate_divisor = 4;
-      if (osd_menu_finish()) {
-        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_RATE);
-      }
-    }
-
-    if (osd_menu_button(7, 6, "RATE DIVISOR 20")) {
-      profile.blackbox.rate_divisor = 20;
-      if (osd_menu_finish()) {
-        osd_push_screen_replace(OSD_SCREEN_BLACKBOX_RATE);
-      }
-    }
-
-    osd_menu_select_save_and_exit(7);
-    osd_menu_finish();
-#endif
-    break;
-  }
-
-
 
   case OSD_SCREEN_STICK_WIZARD:
     osd_menu_start();

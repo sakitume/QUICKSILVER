@@ -299,6 +299,19 @@ typedef struct {
   MEMBER(blackbox_fieldflags, uint32) \
   MEMBER(rate_divisor, uint32)
 
+typedef struct {
+  uint32_t blackbox_fieldflags;
+  uint32_t rate_divisor;
+  const char* name;
+  const char* name_osd;
+} blackbox_preset_t;
+
+#define BLACKBOX_PRESET_MEMBERS       \
+  MEMBER(blackbox_fieldflags, uint32) \
+  MEMBER(rate_divisor, uint32)        \
+  STR_MEMBER(name)                    \
+  STR_MEMBER(name_osd)
+
 // Full Profile
 typedef struct {
   profile_metadata_t meta;
@@ -363,6 +376,12 @@ extern target_info_t target_info;
 
 extern const pid_rate_preset_t pid_rate_presets[];
 extern const uint32_t pid_rate_presets_count;
+
+extern const blackbox_preset_t blackbox_presets[];
+extern const uint32_t blackbox_presets_count;
+
+void blackbox_preset_apply(const blackbox_preset_t* preset, profile_blackbox_t* profile);
+uint8_t blackbox_preset_equals(const blackbox_preset_t* preset, profile_blackbox_t* profile);
 
 void profile_set_defaults();
 pid_rate_t *profile_current_pid_rates();
